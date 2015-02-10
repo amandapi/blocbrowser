@@ -28,20 +28,6 @@
 
 #pragma mark - UIViewController
 
-- (void) resetWebView
-{
-    [self.webView removeFromSuperview];
-
-    UIWebView *newWebView = [[UIWebView alloc] init];
-    newWebView.delegate = self;
-    [self.view addSubview:newWebView];
-    
-    self.webView = newWebView;
-    
-    self.textField.text = nil;
-    [self updateButtonsAndTitle];
-}
-
 
 - (void)loadView
 {
@@ -90,14 +76,13 @@
 }
 
 
-
 - (void)viewWillLayoutSubviews
 {
     [super viewWillLayoutSubviews];
     
     // self.webView.frame = self.view.frame; We don't want the webView to fill the main page
   
-    // First, calculate some dimentsions
+    // First, calculate some dimensions
     static const CGFloat itemHeight = 50;
     CGFloat width = CGRectGetWidth(self.view.bounds);
     CGFloat browserHeight = CGRectGetHeight(self.view.bounds) - itemHeight;
@@ -106,33 +91,22 @@
     self.textField.frame = CGRectMake(0, 0, width, itemHeight);
     self.webView.frame = CGRectMake(0, CGRectGetMaxY(self.textField.frame), width, browserHeight);
     
-    self.awesomeToolbar.frame = CGRectMake(20, 100, 280, 60);
-}
-
-
-#pragma mark - AwesomeFloatingToolbarDelegate
-
-- (void) floatingToolbar:(AwesomeFloatingToolbar *)toolbar didSelectButtonWithTitle:(NSString *)title {
-    // assignment checkpoint Adding a New toolbar - replaced statements with definitions
-    if ([title isEqual:kWebBrowserBackString]) {
-        [self.webView goBack];
-    } else if ([title isEqual:kWebBrowserForwardString]) {
-        [self.webView goForward];
-    } else if ([title isEqual:kWebBrowserStopString]) {
-        [self.webView stopLoading];
-    } else if ([title isEqual:kWebBrowserRefreshString]) {
-        [self.webView reload];
+    if (self.awesomeToolbar.frame.size.height == 0 && self.awesomeToolbar.frame.size.width == 0)
+    {
+        self.awesomeToolbar.frame = CGRectMake(20, 100, 280, 60);
     }
 }
 
+
 #pragma mark - UITextFieldDelegate
+
 
 - (BOOL)textFieldShouldReturn:(UITextField *)textField
 {
     [textField resignFirstResponder];
     
     NSString *URLString = textField.text;
-  
+    
     NSURL *URL = [NSURL URLWithString:URLString];
     
     //Assignment #1 to #3
@@ -147,7 +121,7 @@
     
     // if space does not exist
     if (!URL.scheme && spaceRange.location == NSNotFound) {
-    URL = [NSURL URLWithString:[NSString stringWithFormat:@"http://%@", URLString]];
+        URL = [NSURL URLWithString:[NSString stringWithFormat:@"http://%@", URLString]];
     }
     
     // load the corresponding URL
@@ -159,10 +133,11 @@
     // Hardware > Home clear all history
     
     return NO;
-    }
+}
 
 
 #pragma mark - UIWebViewDelegate
+
 
 - (void)webViewDidStartLoad:(UIWebView *)webView
 {
@@ -170,23 +145,68 @@
     [self updateButtonsAndTitle];
 }
 
+
 - (void)webViewDidFinishLoad:(UIWebView *)webView
 {
     self.frameCount--;
     [self updateButtonsAndTitle];
 }
 
+
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
 {
     if (error.code !=-999) {
-    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"Error", @"Error") message:[error localizedDescription] delegate:nil cancelButtonTitle:NSLocalizedString(@"OK", nil) otherButtonTitles:nil];
-    [alert show];
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"Error", @"Error") message:[error localizedDescription] delegate:nil cancelButtonTitle:NSLocalizedString(@"OK", nil) otherButtonTitles:nil];
+        [alert show];
     }
     [self updateButtonsAndTitle];
     self.frameCount--;
 }
 
+
+#pragma mark - AwesomeFloatingToolbarDelegate
+
+
+- (void) floatingToolbar:(AwesomeFloatingToolbar *)toolbar didSelectButtonWithTitle:(NSString *)title {
+    // assignment checkpoint Adding a New toolbar - replaced statements with definitions
+    if ([title isEqual:kWebBrowserBackString]) {
+        [self.webView goBack];
+    } else if ([title isEqual:kWebBrowserForwardString]) {
+        [self.webView goForward];
+    } else if ([title isEqual:kWebBrowserStopString]) {
+        [self.webView stopLoading];
+    } else if ([title isEqual:kWebBrowserRefreshString]) {
+        [self.webView reload];
+    }
+}
+
+
+- (void) floatingToolbar:(AwesomeFloatingToolbar *)toolbar didTryToPanWithOffset:(CGPoint)offset
+{
+    CGPoint startingPoint = toolbar.frame.origin;
+    // first, we get toolbar's top-left corner after moving to newPoint
+    CGPoint newPoint = CGPointMake(startingPoint.x + offset.x, startingPoint.y + offset.y);
+    // then, create a new CGRect for the potential toolbar
+    CGRect potentialNewFrame = CGRectMake(newPoint.x, newPoint.y, CGRectGetWidth(toolbar.frame), CGRectGetHeight(toolbar.frame));
+    // then, test if new rect is contained by old rect
+    if (CGRectContainsRect(self.view.bounds, potentialNewFrame)) {
+        toolbar.frame = potentialNewFrame;
+    }
+}
+
+
+- (void) floatingToolbar:(AwesomeFloatingToolbar *)toolbar didTryToPinchWithScale:(CGFloat)scale
+{
+    CGRect newFrame = CGRectMake(toolbar.frame.origin.x, toolbar.frame.origin.y, CGRectGetWidth(toolbar.frame) * scale, CGRectGetHeight(toolbar.frame) * scale);
+    
+    if (CGRectContainsRect(self.view.bounds, newFrame) ) {
+        toolbar.frame = newFrame;
+    }
+}
+
+
 #pragma mark - Miscellaneous
+
 
 - (void) updateButtonsAndTitle
 {
@@ -211,6 +231,20 @@
 
 }
 
+
+- (void) resetWebView
+{
+    [self.webView removeFromSuperview];
+    
+    UIWebView *newWebView = [[UIWebView alloc] init];
+    newWebView.delegate = self;
+    [self.view addSubview:newWebView];
+    
+    self.webView = newWebView;
+    
+    self.textField.text = nil;
+    [self updateButtonsAndTitle];
+}
 
 
 @end
