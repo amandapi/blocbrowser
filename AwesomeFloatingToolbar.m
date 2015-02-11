@@ -43,12 +43,12 @@
         
         for (NSString *currentTitle in self.currentTitles) {
             UIButton *button = [[UIButton alloc] init];
-            button.userInteractionEnabled = YES; // changed to YES - is that OK?
+            button.userInteractionEnabled = NO; 
             button.alpha = 0.25; // transparency is 0.25
             
             NSUInteger currentTitleIndex = [self.currentTitles indexOfObject:currentTitle];
             // 0 through 3
-            NSString *titleForThisButton = [self.currentTitles objectAtIndex:currentTitleIndex];
+            NSString *titleForThisButton = [self.currentTitles objectAtIndex:currentTitleIndex];// redundent
             UIColor *colorForThisButton = [self.colors objectAtIndex:currentTitleIndex];
             
             //label.textAlignment = NSTextAlignmentCenter;
@@ -63,8 +63,9 @@
         self.buttons = buttonsArray;
         
         for (UIButton *thisButton in self.buttons) {
-            [thisButton addTarget:self action:@selector(buttonPressed:) forControlEvents:UIControlEventTouchUpInside];
+            [thisButton addTarget:self action:@selector(buttonUp:) forControlEvents:UIControlEventTouchUpInside];
             [self addSubview:thisButton];
+            [thisButton addTarget:self action:@selector(buttonDown:) forControlEvents:UIControlEventTouchDown];
         }
         //self.tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapFired:)];
         // detect the tap at view self, and when a tap is detected call tapFired:
@@ -142,15 +143,17 @@
     return (UIButton *)subview;
 }
 
-- (void) touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
+- (void) buttonDown:(id)sender  {
     // How to make buttons dim on touch?
-    UIButton *button = [self ButtonFromTouches:touches withEvent:event];
+    UIButton *button = (UIButton *)sender;
     button.alpha = 0.5;
 }
 
-- (void) buttonPressed:(id)sender {
+- (void) buttonUp:(id)sender {
+    UIButton *button = (UIButton *)sender;
     if ([self.delegate respondsToSelector:@selector(floatingToolbar:didSelectButtonWithTitle:)]) {
-        [self.delegate floatingToolbar:self didSelectButtonWithTitle:((UIButton *)sender).titleLabel.text];
+        [self.delegate floatingToolbar:self didSelectButtonWithTitle:button.titleLabel.text];
+        button.alpha = 1.0;
     }
 }
 
